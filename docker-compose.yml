@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      MYSQL_DATABASE_FILE: /run/secrets/db_name
+      MYSQL_USER_FILE: /run/secrets/db_user
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_root_password
+      - db_name
+      - db_user
+      - db_password
+    networks:
+      - webnet
+
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:latest
+    ports:
+      - 80:80
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME_FILE: /run/secrets/db_name
+      WORDPRESS_DB_USER_FILE: /run/secrets/db_user
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_name
+      - db_user
+      - db_password
+    networks:
+      - webnet
+
+secrets:
+  db_root_password:
+    file: ./db_root_password.txt
+  db_name:
+    file: ./db_name.txt
+  db_user:
+    file: ./db_user.txt
+  db_password:
+    file: ./db_password.txt
+
+networks:
+  webnet:
+    driver: overlay
+
+volumes:
+  db_data:
